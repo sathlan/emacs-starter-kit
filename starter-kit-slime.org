@@ -1,0 +1,63 @@
+#+TITLE: SLIME
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This is part not of the [[file:starter-kit.org][Emacs Starter Kit]].
+
+* Starter kit Slime
+[[http://common-lisp.net/project/slime/][SLIME: The Superior Lisp Interaction Mode for Emacs]]
+  
+** Installation
+#+begin_src emacs-lisp
+  (add-to-list 'load-path (concat dotfiles-dir "src/slime"))
+  (add-to-list 'load-path (concat dotfiles-dir "src/slime/contrib"))
+  (require 'slime-autoloads)
+  (require 'slime-scheme)
+  (slime-scheme-init)
+;  (slime-setup '(slime-repl slime-autodoc slime-c-p-c slime-fancy-inspector slime-fuzzy slime-presentations slime-scratch slime-references slime-package-fu slime-fontifying-fu))
+;  (slime-setup '(slime-fancy slime-banner  slime-clipboard))
+  (slime-setup '(slime-repl ))
+  (add-hook 'slime-load-hook (lambda () (require 'inferior-slime)))
+  (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode 1)))
+  (setq slime-lisp-implementations
+        '((kawa ("java"
+                 "-cp" "/usr/local/share/java/kawa.jar:/usr/local/diablo-jdk1.6.0/lib/tools.jar"
+                 "-Xdebug" "-Xrunjdwp:transport=dt_socket,server=y,suspend=n"
+                 "kawa.repl" "-s")
+                :init kawa-slime-init)
+          (mit-scheme ("/tmp/mit.sh")
+                      :init mit-scheme-init)))
+  (defun kawa-slime-init (file _)
+    (setq slime-protocol-version 'ignore)
+    (let ((swank "~/.emacs.d/src/slime/contrib/swank-kawa.scm")) ; <-- insert the right path
+      (format "%S\n"
+              `(begin (require ,(expand-file-name swank)) (start-swank ,file)))))
+  
+  (defun mit-scheme-init (file encoding)
+    (format "%S\n\n"
+            `(begin
+              (load-option 'format)
+              (load-option 'sos)
+              (eval 
+               '(construct-normal-package-from-description
+                 (make-package-description '(swank) '(()) 
+                                           (vector) (vector) (vector) false))
+               (->environment '(package)))
+              (load ,(expand-file-name 
+                      "~/.emacs.d/src/slime/contrib/swank-mit-scheme.scm" ; <-- insert your path
+                      slime-path)
+                    (->environment '(swank)))
+              (eval '(start-swank ,file) (->environment '(swank))))))
+  
+  (defun mit-scheme ()
+    (interactive)
+    (slime 'mit-scheme))
+  
+  (defun find-mit-scheme-package ()
+    (save-excursion
+      (let ((case-fold-search t))
+        (and (re-search-backward "^[;]+ package: (\\(.+\\)).*$" nil t)
+             (match-string-no-properties 1)))))
+  (defun mit/init ()
+     (setq slime-find-buffer-package-function 'find-mit-scheme-package))
+  (add-hook 'slime-connected-hook 'mit/init)
+#+end_src

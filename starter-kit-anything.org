@@ -1,0 +1,18 @@
+#+TITLE: Starter Kit Anything
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This is part not of the [[file:starter-kit.org][Emacs Starter Kit]].
+
+* Starter kit Anything
+
+** Installation
+The prefix key is =<f5> a= by default which causes problem, so I use
+=M-n=.
+#+begin_src emacs-lisp
+  (add-to-list 'load-path (concat dotfiles-dir "src/anything-config"))
+  (add-to-list 'load-path (concat dotfiles-dir "src/anything-config/extensions"))
+  (setq anything-command-map-prefix-key "M-n")
+  (require 'anything-startup)
+#+end_src
+
+Now type =M-n C-h= for a list of action that you can be done.

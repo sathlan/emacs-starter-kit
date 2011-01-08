@@ -1,0 +1,87 @@
+#+TITLE: Starter Kit Jabber
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This is not part of the [[file:starter-kit.org][Emacs Starter Kit]].
+
+* Starter kit Jabber
+[[http://www.emacswiki.org/emacs/JabberEl#toc9][EmacsWiki: Jabber El]]
+
+** Installation
+#+begin_src emacs-lisp
+  (add-to-list 'load-path (concat dotfiles-dir "src/jabber"))
+  (load "jabber-autoloads")
+  (require 'jabber)
+#+end_src
+
+** Debug
+#+begin_src emacs-lisp
+  ;; For debug purpose.
+  (setq jabber-debug-log-xml t)
+  (setq jabber-debug-keep-process-buffers t)
+  
+#+end_src
+
+** Make jabber in its own window
+#+begin_src emacs-lisp
+  (setq 
+    special-display-regexps 
+    '(("jabber-chat" 
+        (width . 80)
+       (scroll-bar-width . 16)
+       (height . 15)
+       (tool-bar-lines . 0)
+       (menu-bar-lines 0)
+  ;     (font . "-GURSoutline-Courier New-normal-r-normal-normal-11-82-96-96-c-70-iso8859-1")
+       (left . 80))))
+#+end_src
+
+** Enable XOSD notification
+Directly from the [[http://www.emacswiki.org/emacs/JabberEl][EmacsWiki: Jabber El]].  It requires the =osd_cat=
+binary.
+#+begin_src emacs-lisp
+  (setq jabber-xosd-display-time 5)
+  
+  (defun jabber-xosd-display-message (message)
+    "Displays MESSAGE through the xosd"
+    (let ((process-connection-type nil))
+      (start-process "jabber-xosd" nil "osd_cat" "-p" "bottom" "-A" "center" "-f" "-*-courier-*-*-*-*-30" "-d" (number-to-string jabber-xosd-display-time))
+      (process-send-string "jabber-xosd" message)
+      (process-send-eof "jabber-xosd")))
+  
+  (defun jabber-message-xosd (from buffer text propsed-alert)
+    (jabber-xosd-display-message "New message."))
+  
+  (add-to-list 'jabber-alert-message-hooks 'jabber-message-xosd)
+#+end_src
+
+** Getting connected
+Here's how to separate password info from configuration.  We need all
+babel for it
+
+#+begin_src emacs-lisp
+(require 'starter-kit-org)
+#+end_src
+
+First, put on stdout the table... 
+#+tblname: ex-data
+#+begin_src sh :results output silent :type table :exports results
+cat ~/.jabberrc
+#+end_src
+
+... and transform it into a the lisp structure required by the
+program.
+#+begin_src emacs-lisp :var data=ex-data :results silent
+  (let ((ch/r nil)
+         (ch/test1 (org-table-to-lisp data)))
+    (while (car ch/test1)
+      (let ((line (car ch/test1)))
+        (setq ch/tt (list (car line)
+                          (cons ':password (nth 1 line ))
+                                (cons ':network-server (nth 2 line))
+                                (cons ':port (nth 3 line))
+                                (cons ':connection-type (nth 4 line))))
+        (push ch/tt ch/r))
+      (setq ch/test1 (cdr ch/test1)))
+    (setq jabber-account-list ch/r))
+#+end_src
+

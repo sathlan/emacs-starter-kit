@@ -1,6 +1,3 @@
-
-
-
 * Starter kit yasnippet
 [[http://code.google.com/p/yasnippet/][yasnippet]] is yet another snippet expansion system for Emacs.  It is
 inspired by TextMate's templating syntax.
@@ -16,4 +13,9 @@ load the yasnippet bundle
 load the snippets defined in the =./snippets/= directory
 #+begin_src emacs-lisp
   (yas/load-directory (expand-file-name "snippets" dotfiles-dir))
+#+end_src
+
+Define the completion menu fonction
+#+begin_src emacs-lisp
+  (setq yas/prompt-functions '(yas/ido-prompt yas/dropdown-prompt yas/x-prompt yas/completing-promp yas/no-prompt))
 #+end_src

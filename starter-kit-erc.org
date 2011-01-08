@@ -1,0 +1,103 @@
+#+TITLE: Starter Kit ERC
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This is not part of the [[file:starter-kit.org][Emacs Starter Kit]].
+
+* Starter kit ERC
+[[http://www.emacswiki.org/emacs/ERC][EmacsWiki: ERC]]
+
+** Installation
+
+#+begin_src emacs-lisp
+  (require 'erc)
+#+end_src
+
+
+** Using bitlbee
+Directly from the wiki.
+#+begin_src emacs-lisp
+; (defvar bitlbee-password "geheim")
+; 
+; (add-hook 'erc-join-hook 'bitlbee-identify)
+; (defun bitlbee-identify ()
+;   "If we're on the bitlbee server, send the identify command to the 
+; &bitlbee channel."
+;   (when (and (string= "localhost" erc-session-server)
+;              (string= "&bitlbee" (buffer-name)))
+;     (erc-message "PRIVMSG" (format "%s identify %s" 
+;                                    (erc-default-target) 
+;                                    bitlbee-password))))
+#+end_src
+
+For bitlbee guidance I used [[http://princessleia.com/bitlbee.php][PrincessLeia.com - Bitlbee Quickstart
+Guide (Online Edition) & Notes]] and other exists on [[http://www.bitlbee.org/main.php/extdoc.html][BitlBee - External
+docs]].
+
+** ERC
+Open a buffer for private message : [[http://www.emacswiki.org/emacs/ErcAutoQuery][EmacsWiki: Erc Auto Query ]]
+
+#+begin_src emacs-lisp
+  (setq erc-auto-query 'buffer)
+#+end_src
+
+Jabber backlog.
+#+begin_src emacs-lisp
+  (defun my-reformat-jabber-backlog ()
+    "Fix \"unkown participant\" backlog messages from bitlbee."
+    (save-excursion
+      (goto-char (point-min))
+      (if (looking-at
+       "^<root> System message: Message from unknown participant \\([^:]+\\):")
+      (replace-match "<\\1>"))))
+  (add-hook 'erc-insert-modify-hook 'my-reformat-jabber-backlog)
+#+end_src
+
+More module
+#+begin_src emacs-lisp
+    (setq erc-modules
+          '(
+           notify
+           pcomplete
+           netsplit
+           fill
+           button
+           match
+           track
+           completion
+           readonly
+           networks
+           ring
+           autojoin
+           noncommands
+           irccontrols
+           move-to-prompt
+           stamp
+           menu
+           list))
+  (erc-update-modules)
+#+end_src
+
+*** Notification
+[[http://www.emacswiki.org/emacs/ErcNickNotify][EmacsWiki: Erc Nick Notify]]
+Notify for messages.
+#+begin_src emacs-lisp
+  (add-to-list 'load-path (concat dotfiles-dir "src/erc-nick-notify"))
+  (require 'erc-nick-notify)
+  (setq erc-nick-notify-icon "/usr/local/share/icons/gnome/32x32/status/important.png")
+#+end_src
+
+Notify for people.
+#+begin_src emacs-lisp
+  (setq erc-notify-list '("nicolasmarchal" "julienbille" "ignacemouzannar" "pierremolin" "xaviermartin"))
+  (setq erc-notify-interval 15)
+  (defun ch/notify-send (subject &rest message)
+    "Use notify-send to display change in status."
+    ; message is a list of names
+    (dolist (user message)
+        (call-process-shell-command (concat "notify-send -i /usr/local/share/icons/gnome/32x32/status/important.png "
+                                            (shell-quote-argument subject) " " (or (shell-quote-argument user) "")))))
+  (add-hook 'erc-notify-signon-hook 'ch/notify-send)
+  (add-hook 'erc-notify-signoff-hook 'ch/notify-send)
+  
+  
+#+end_src

@@ -1,0 +1,13 @@
+#+TITLE: Starter kit Geiser
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This is part not of the [[file:starter-kit.org][Emacs Starter Kit]].
+
+* Starter kit Geiser
+[[http://www.nongnu.org/geiser/][Geiser: Top]]
+  
+** Installation
+   
+#+begin_src emacs-lisp
+;  (load (concat dotfiles-dir "src/geiser/elisp/geiser-load"))
+#+end_src

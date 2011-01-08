@@ -1,0 +1,263 @@
+#+TITLE: Starter Kit Eproject
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This is not part of the [[file:starter-kit.org][Emacs Starter Kit]].
+
+* Starter kit Eproject
+Check this gem from [[https://github.com/jrockway/eproject/wiki][Home - eproject - GitHub]]
+
+** Installation
+#+begin_src emacs-lisp
+  (add-to-list 'load-path (concat dotfiles-dir "src/eproject"))
+  (require 'eproject)
+  (require 'eproject-extras)
+  
+#+end_src
+
+** Keybinding
+This curry smells good, but I should improve my cooking to get my hold
+of this.
+#+begin_src emacs-lisp
+  ;; eproject global bindings
+  
+  (defmacro .emacs-curry (function &rest args)
+    `(lambda () (interactive)
+       (,function ,@args)))
+  (defmacro .emacs-eproject-key (key command)
+    (cons `progn
+  (loop for (k . p) in (list (cons key 4) (cons (upcase key) 1))
+        collect
+        `(global-set-key
+          (kbd ,(format "C-x p %s" k))
+          (.emacs-curry ,command ,p)))))
+  (.emacs-eproject-key "k" eproject-kill-project-buffers)
+  (.emacs-eproject-key "v" eproject-revisit-project)
+  (.emacs-eproject-key "b" eproject-ibuffer)
+  (.emacs-eproject-key "o" eproject-open-all-project-files)
+  
+#+end_src
+
+** Integration with anything
+[[https://github.com/jrockway/eproject/wiki/EprojectExamples][Eprojectexamples - eproject - GitHub]]
+#+begin_src emacs-lisp
+  (defvar anything-c-source-eproject-files
+    '((name . "Files in eProject")
+      (init . (lambda () (if (buffer-file-name)
+                        (setq anything-eproject-root-dir (eproject-maybe-turn-on))
+                      (setq anything-eproject-root-dir 'nil)
+                      )))
+      (candidates . (lambda () (if anything-eproject-root-dir
+                              (eproject-list-project-files anything-eproject-root-dir))))
+      (type . file)
+      )
+    "Search for files in the current eProject.")
+  
+  (defvar anything-c-source-eproject-buffers
+    `((name . "Buffers in this eProject")
+           (init . (lambda () (if (buffer-file-name)
+                             (setq anything-eproject-root-dir (eproject-maybe-turn-on))
+                           (setq anything-eproject-root-dir `nil))))
+           (candidates . (lambda () (if anything-eproject-root-dir
+                                   (mapcar `buffer-name ( cdr (assoc anything-eproject-root-dir (eproject--project-buffers)))))))
+           (volatile)
+           (type . buffer)
+           )
+    "Search for buffers in this project.")
+  
+#+end_src
+
+#+begin_src emacs-lisp
+  (defun anything-for-buffers ()
+    "Preconfigured `anything' for opening buffers.
+  Searches for buffers in the current project, then other buffers, also gives
+  option of recentf. Replaces switch-to-buffer."
+    (interactive)
+    (anything '(anything-c-source-eproject-buffers
+                anything-c-source-buffers+
+                anything-c-source-buffer-not-found
+                anything-c-source-recentf)))
+  
+#+end_src
+
+** Eproject Windows configuration
+[[https://github.com/jrockway/eproject/wiki/EprojectExamples][Eprojectexamples - eproject - GitHub]]
+
+#+begin_src emacs-lisp
+  (defun first-matching-buffer (predicate)
+    "Return PREDICATE applied to the first buffer,
+  where PREDICATE applied to the buffer yields a non-nil value."
+    (loop for buf in (buffer-list)
+          when (with-current-buffer buf (funcall predicate buf))
+          return (with-current-buffer buf (funcall predicate buf))))
+  
+  (defun fix-windows ()
+    "Setup my window config."
+    (interactive)
+    (let ((current-project
+           (first-matching-buffer (lambda (x) (ignore-errors (eproject-name)))))
+          (current-irc-window
+           (first-matching-buffer (lambda (x) (and (eq major-mode 'rcirc-mode)
+                                              x))))
+          (current-shell
+           (or (first-matching-buffer (lambda (x)
+                                        (and (or (eq major-mode 'eshell-mode)
+                                                 (eq major-mode 'term-mode))
+                                             x)))
+               (eshell))))
+  
+      (delete-other-windows)
+      (split-window-horizontally)
+      (split-window-horizontally)
+      (window-number-select 1)
+      (split-window-vertically)
+      (labels ((show (x) (set-window-buffer nil (or x (get-buffer-create "*scratch*")))))
+        (window-number-select 1)
+        (show current-irc-window)
+        (window-number-select 2)
+        (show current-shell)
+        (let ((cur))
+          (loop for i in '(3 4)
+                do
+                (window-number-select i)
+                (show (first-matching-buffer
+                       (lambda (x) (and (equal (ignore-errors (eproject-name))
+                                          current-project)
+                                   (not (equal cur (buffer-name x)))
+                                   x))))
+                (setf cur (buffer-name (current-buffer))))))
+      (balance-windows)))
+  
+#+end_src
+
+** Project type definition
+*** Perl type
+[[https://github.com/jrockway/eproject/wiki/EprojectExamples][Eprojectexamples - eproject - GitHub]]
+#+begin_src emacs-lisp
+  (define-project-type perl (generic)
+    (or (look-for "Makefile.PL") (look-for "Build.PL"))
+    :relevant-files ("\\.pm$" "\\.t$" "\\.pl$" "\\.PL$")
+    :irrelevant-files ("inc/" "blib/" "cover_db/")
+    :mxdeclare-project-p (lambda (root)
+                           (file-exists-p (concat root ".mxdeclare_project")))
+    :file-name-map (lambda (root)
+                     (lambda (root file)
+                       (cond ((string-match "^lib/\.+ [.]pm$" file)
+                              (let ((m (match-string 1 file)))
+                                (while (string-match "/" m)
+                                  (setf m (replace-match "::" nil nil m)))
+                                m))
+                             (t file))))
+    :main-file "Makefile.PL")
+  
+  (defun cperl-mxdeclare-project-p ()
+    "Determine if this project should use MooseX::Declare class definitions."
+    (ignore-errors
+      (eproject-attribute :is-mxdeclare-project)))
+  
+#+end_src
+
+*** C type
+#+begin_src emacs-lisp
+  (define-project-type c (generic)
+    (look-for "Makefile")
+    :relevant-files ("\\.c$" "\\.h$"))
+#+end_src
+*** SICP type
+#+begin_src emacs-lisp
+  (define-project-type sicp (generic-git)
+    (look-for ".eproject-sicp")
+    :relevant-files ("\\.scm"))
+#+end_src
+
+#+begin_src emacs-lisp
+    (defun fix-windows-sicp ()
+        "Setup my window config for sicp study."
+        (interactive)
+        (let ((current-project
+               (first-matching-buffer (lambda (x) (ignore-errors (eproject-name)))))
+              (current-info-sicp )
+              (current-repl (first-matching-buffer (lambda (x) (and (eq major-mode 'slime-repl-mode) x)))))
+          (setq current-repl (if (not (bufferp current-repl)) (mit-scheme)
+            (first-matching-buffer (lambda (x) (and (eq major-mode 'slime-repl-mode) x)))))
+          (delete-other-windows)
+          (split-window-horizontally)
+          (find-file "/home/chem/org/study/language/scheme.org")
+          (split-window-horizontally)
+          (info "sicp")
+          (select-window (next-window))
+          (select-window (next-window))
+          (switch-to-buffer current-repl)
+          (balance-windows)))
+    
+#+end_src
+
+#+begin_src emacs-lisp
+;  (add-hook 'sicp-project-file-visit-hook 'fix-windows-sicp)
+
+#+end_src
+
+*** Work type
+#+begin_src emacs-lisp
+  (defun fix-windows-work ()
+    "Setup my window config for sicp study."
+    (interactive)
+    (let ((current-project
+           (first-matching-buffer (lambda (x) (ignore-errors (eproject-name)))))
+          (current-info-sicp )
+          (current-shell
+           (or (first-matching-buffer (lambda (x)
+                                        (and (or (eq major-mode 'eshell-mode)
+                                                 (eq major-mode 'term-mode))
+                                             x)))
+               (eshell)))
+          (current-irc-window
+           (first-matching-buffer (lambda (x) (and (eq major-mode 'erc-mode)
+                                              x))))
+          (current-scratch
+           (first-matching-buffer (lambda (x) (and (eq major-mode 'lisp-interaction-mode)
+                                              x)))))
+    (delete-other-windows)
+    (split-window-horizontally)
+    (split-window-horizontally)
+    (split-window-vertically)
+    (switch-to-buffer current-shell)
+    (select-window (next-window))
+    (switch-to-buffer current-irc-window)
+    (split-window-vertically)
+    (select-window (next-window))
+    (switch-to-buffer current-scratch)
+    (select-window (next-window))
+    (find-file "~/org/enovance.org")
+    (balance-windows)))
+#+end_src
+*** "programmation avancée en c" type
+#+begin_src emacs-lisp
+  (define-project-type c-book1 (c)
+    (look-for ".book1")
+    :relevant-files ("README" "Makefile" "\\.c$" "\\.h$"))
+  
+#+end_src
+#+begin_src emacs-lisp
+  (defun fix-windows-c-book1 ()
+      "Setup my window config for c-book1 study."
+      (interactive)
+      (let ((current-project
+             (find-file "/home/chem/work/c/varrette07:_progr_c/README"))
+            (current-shell
+             (let ((default-directory "~/work/c/varrette07:_progr_c/"))
+               (or (first-matching-buffer (lambda (x)
+                                          (and (or (eq major-mode 'eshell-mode)
+                                                   (eq major-mode 'term-mode))
+                                               x)))
+                   (eshell)))))
+        (delete-other-windows)
+        (split-window-horizontally)
+        (switch-to-buffer current-shell)
+        (split-window-horizontally)
+        (switch-to-buffer current-project)
+        (select-window (next-window))
+        (select-window (next-window))
+        (find-file "~/org/study/language/c.org")
+        (balance-windows)))
+  
+#+end_src

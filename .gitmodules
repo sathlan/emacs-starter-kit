@@ -13,3 +13,33 @@
 [submodule "src/zenburn-emacs"]
 	path = src/zenburn-emacs
 	url = http://github.com/bbatsov/zenburn-emacs.git
+[submodule "src/idle-highlight"]
+	path = src/idle-highlight
+	url = /usr/home/chem/src/idle-highlight.el/
+[submodule "src/slime"]
+	path = src/slime
+	url = /usr/home/chem/src/slime
+[submodule "src/eproject"]
+	path = src/eproject
+	url = git://github.com/jrockway/eproject.git
+[submodule "src/anything-config"]
+	path = src/anything-config
+	url = git://repo.or.cz/anything-config.git
+[submodule "src/yasnippet"]
+	path = src/yasnippet
+	url = /home/chem/src/yasnippet
+[submodule "src/erc"]
+	path = src/erc
+	url = /home/chem/src/erc
+[submodule "src/erc-nick-notify"]
+	path = src/erc-nick-notify
+	url = /home/chem/src/erc-nick-notify
+[submodule "src/color-theme-railscasts"]
+	path = src/color-theme-railscasts
+	url = git@github.com:cathlan/color-theme-railscasts.git
+[submodule "src/gnus"]
+	path = src/gnus
+	url = git://github.com/emacsmirror/gnus.git
+[submodule "src/cperl-mode"]
+	path = src/cperl-mode
+	url = git://github.com/jrockway/cperl-mode.git

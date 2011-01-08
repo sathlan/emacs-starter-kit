@@ -1,0 +1,292 @@
+#+TITLE: Personnal configuration
+#+OPTIONS: toc:nil num:nil ^:nil
+
+* Locales
+#+begin_src emacs-lisp
+(setq locale-coding-system 'utf-8)
+(setq system-time-locale 'fr_FR.UTF-8)
+(setq system-messages-locale 'fr_FR.UTF-8)
+#+end_src
+* Require
+#+BEGIN_SRC emacs-lisp
+  (require 'ch/library "library.el")
+#+END_SRC
+
+* Better defaults
+#+BEGIN_SRC emacs-lisp
+  (scroll-bar-mode -1)
+;  (add-to-list 'load-path "~/.emacs.d/src/color-theme-railscasts")
+ (require 'color-theme)
+ (color-theme-initialize)
+   (load-file "~/.emacs.d/src/color-theme-railscasts/color-theme-railscasts.el")
+ (color-theme-railscasts)
+
+;  (require 'color-theme-railscasts)
+;  (color-theme-railscasts)
+  (setq grep-command "zgrep -nH -e ")
+#+END_SRC
+
+* Packages
+** Command Frequency
+It allows me to make shortcuts where needed.
+#+begin_src emacs-lisp :tangle no
+  (require 'command-frequency)
+  (setq command-frequency-table-file "~/.emacs.d/.frequencies")
+  (command-frequency-table-load)
+  (command-frequency-mode 1)
+  (command-frequency-autosave-mode 1)
+#+end_src
+
+** w3m
+#+begin_src emacs-lisp
+(starter-kit-load "starter-kit-w3m.org")
+#+end_src
+
+** iimage
+#+begin_src emacs-lisp
+    (add-to-list 'load-path "~/.emacs.d/lisp/iimage")
+    (autoload 'iimage-mode "iimage" "Support Inline image minor mode." t)
+    (autoload 'turn-on-iimage-mode "iimage" "Turn on Inline image minor mode." t)
+    (add-hook 'info-mode-hook 'turn-on-iimage-mode)
+    (add-hook 'wiki-mode-hook 'turn-on-iimage-mode)
+    (add-hook 'org-mode-hook  'turn-on-iimage-mode)
+#+end_src
+
+** TODO pgg
+Needs integration with "bbdb-pgp"
+
+#+BEGIN_SRC emacs-lisp
+  (require 'pgg)
+  (setq pgg-scheme 'epg)
+  (setq gnus-treat-x-pgp-sig t
+        mm-verify-option 'known
+        mm-decrypt-option 'always)
+  (setq gnus-buttonized-mime-types '("multipart/signed"))
+#+END_SRC
+
+** woman
+#+BEGIN_SRC emacs-lisp
+  (setq woman-cache-filename "~/.emacs.d/wmnach.el")
+  ;; if manpath exec exist in path, use it to set woman-path.
+  (dolist (manpath-path (mapcar
+                         '(lambda (directory)
+                            (expand-file-name "manpath" directory))
+                         exec-path))
+    (if (file-executable-p manpath-path)
+        (setq woman-manpath
+              (split-string
+               ; chomp
+               (substring
+                (shell-command-to-string
+                 (concat manpath-path " 2>/dev/null"))
+                0 -1)
+               ":"))))
+  (setq woman-use-own-frame nil)
+#+END_SRC
+
+** Server
+#+BEGIN_SRC emacs-lisp
+  (server-start)
+#+END_SRC
+
+** Magit
+#+BEGIN_SRC emacs-lisp
+  (eval-after-load 'magit
+    '(progn (defadvice magit-log-edit (after ch/switch-english ())
+              (ch/set-dictionary "english"))
+            (define-key global-map "\C-xvp" 'magit-status)
+            (ad-activate 'magit-log-edit)))
+#+END_SRC
+
+** Printing
+#+BEGIN_SRC emacs-lisp
+  (setq ps-paper-type 'a4
+        ps-font-family 'Courier
+        ps-font-size 10
+        ps-print-header t
+        ps-landscape-mode nil
+        ;; Lower margin in postscript points : (* 72 (/ 1.8 2.54)) = 1.8 cm
+        ps-bottom-margin 51.02362204724409)
+#+END_SRC
+
+** Calendar
+#+BEGIN_SRC emacs-lisp
+  ;; week start on monday
+  (setq calendar-week-start-day 1)
+  ;; get hour on the status bar
+  (setq display-time-24hr-format t)
+  
+  ;; french
+  (defconst calendar-day-abbrev-array
+    ["dim" "lun" "mar" "mer" "jeu" "ven" "sam"])
+  (defconst calendar-day-name-array
+    ["dimanche" "lundi" "mardi" "mercredi" "jeudi" "vendredi" "samedi"])
+  (defconst calendar-month-abbrev-array
+    ["jan" "fév" "mar" "avr" "mai" "jun"
+     "jul" "aoû" "sep" "oct" "nov" "déc"])
+  (defconst calendar-month-name-array
+    ["janvier" "février" "mars" "avril" "mai" "juin"
+     "juillet" "août" "septembre" "octobre" "novembre" "décembre"])
+  (setq calendar-date-display-form '(dayname " " day " " monthname " " year))
+  
+  ;; holiday
+  (setq mark-holidays-in-calendar t
+        general-holidays nil
+        hebrew-holidays nil
+        islamic-holidays nil
+        bahai-holidays nil
+        oriental-holidays nil)
+  (setq local-holidays
+        '((holiday-fixed 5 1 "Fête du travail")
+          (holiday-fixed 5 8 "Victoire 1945")
+          (holiday-fixed 7 14 "Fête nationale")
+          (holiday-fixed 8 15 "Assomption")
+          (holiday-fixed 11 1 "Toussaint")
+          (holiday-fixed 11 11 "Armistice 1918")
+          (holiday-float 5 0 2 "Fête des mères")
+          (holiday-float 6 0 3 "Fête des pères")))
+  (setq calendar-time-display-form
+        '(24-hours ":" minutes))
+  (setq calendar-date-display-form
+        '(day " " monthname " " year))
+#+END_SRC
+
+** Diary
+#+BEGIN_SRC emacs-lisp
+  (let ((diary-filename "~/.emacs.d/diary"))
+    (when (file-exists-p diary-filename)
+      (setq diary-file diary-filename)
+      (setq display-time-24hr-format t)
+      (setq display-time-use-mail-icon t)
+      (add-hook 'diary-hook 'appt-make-list)
+      (diary 0)))
+#+END_SRC
+
+** dired
+#+BEGIN_SRC emacs-lisp
+  (define-key global-map "\C-x\C-j" 'dired-jump)
+  (define-key global-map "\C-x4\C-j" 'dired-jump-other-window)
+  (setq dired-recursive-deletes t)      ;recursive deletion!!
+  (add-hook 'dired-load-hook
+	    (lambda ()
+	      (load "dired-x")
+	      ;; Set dired-x global variables here.  For example:
+	      ;; (setq dired-guess-shell-gnutar "gtar")
+	      ;; (setq dired-x-hands-off-my-keys nil)
+	      ))
+  (add-hook 'dired-mode-hook
+	    (lambda ()
+	      ;; Set dired-x buffer-local variables here.  For example:
+	      ;; (setq dired-omit-files-p t)
+	      ))
+#+END_SRC
+
+** ispell
+#+begin_src emacs-lisp
+  (require 'ispell)
+  (setq ispell-program-name "aspell")
+  (add-to-list
+   'ispell-local-dictionary-alist
+   '("francais8"
+     "[A-Za-zàâäéêëèîïôöûüùæçœÀÂÄÉÊËÈÎÏÔÖÛÜÙÆÇŒ]"
+     "[^A-Za-zàâäéêëèîïôöûüùæçœÀÂÄÉÊËÈÎÏÔÖÛÜÙÆÇŒ]"
+     "[-'`\"]" t ("-B" "-d" "francais" "--encoding=utf-8") nil utf-8))
+  
+  (setq ispell-local-dictionary "francais8")
+  (add-to-list
+  'ispell-local-dictionary-alist
+   '("english8"
+     "[A-Za-z]"
+     "[^A-Za-z]"
+     "[-'`\"]" t ("-C" "-d" "english" ) nil utf-8))
+  
+  (setq ispell-complete-word-dict "/home/chem/words")
+#+end_src
+
+** TODO Langage recognition
+Do not work correctly.
+For the time being I just use manual switch.
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-g l") 'ch/switch-dictionary)
+#+END_SRC
+
+** View mode
+Add the "R" key to view mode.  It permits to switch to root user using
+sudo.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'view-mode-hook 'ch/switch-to-root-user-binding)
+  (add-hook 'find-file-hook 'ch/switch-to-view-when-unwritable)
+#+END_SRC
+
+** Configuration file
+#+BEGIN_SRC emacs-lisp
+  (let ((matching-files (list
+                         "\\.Xdefaults\\'"
+                         "\\.Xresources\\'"
+                         "\\.Xenvironment\\'"
+                         "\\.ad\\'")))
+    (require 'generic-x)
+    (setq generic-define-unix-modes't)
+    (and
+     (memq 'x-resource-generic-mode generic-extras-enable-list)
+     (define-generic-mode 'x-resource-generic-mode
+       (list ?!)
+       nil
+       '(("^\\(\\([^:\n]\|\\\n\\)+:\\)" 1 'font-lock-variable-name-face))
+       matching-files
+       nil
+       "Generic mode for X Resource configuration files.")))
+#+END_SRC
+
+** Text
+#+begin_src emacs-lisp
+  (add-hook 'text-mode-hook
+            '(lambda ()
+               (turn-on-auto-fill)
+               (flyspell-mode)
+               (setq abbrev-mode t)
+               (set-input-method "TeX")))
+  (setq colon-double-space t)
+#+end_src
+** Custom file
+#+begin_src emacs-lisp
+  (setq custom-file "~/.emacs.d/custom.el")
+  (load custom-file)
+#+end_src
+* Personal shortcuts
+#+BEGIN_SRC emacs-lisp
+  (global-set-key [f7] 'follow-delete-other-windows-and-split)
+  (global-set-key [f5] 'org-clock-goto)
+#+END_SRC
+
+* Macros
+#+begin_src emacs-lisp
+
+(fset 'ch/begin-cleanup-page
+   (lambda (&optional arg) "Keyboard macro." (interactive "p") (kmacro-exec-ring-item (quote ([134217788 67108896 134217790 134217848 114 backspace 102 105 108 108 45 tab 112 97 backspace backspace 112 97 backspace backspace 114 101 tab return 33554450 94 32 42 17 10 32 42 36 return 13] 0 "%d")) arg)))
+
+(global-set-key (kbd "C-x C-k C") 'ch/begin-cleanup-page)
+#+end_src
+
+* Copy/Paste handling.
+Thanks to this [[http://www.jwz.org/doc/x-cut-and-paste.html][X Selections, X Cut Buffers, and Emacs Kill Rings]], I
+better understand the X mechanism for cut and paste.  Now I'd like to:
+ - have shift insert paste the primary selection;
+ - have shift click paste the primary selection at point not where the
+   mouse is.
+
+#+begin_src emacs-lisp
+  (defun insert-primary-selection ()
+    "Insert primary selection at point"
+    (interactive)
+    (when select-active-regions
+      (deactivate-mark))
+    (let ((primary (x-get-selection 'PRIMARY)))
+      (if primary
+          (insert primary))))
+  (global-set-key [S-insert] 'insert-primary-selection)
+  
+  (global-set-key [S-down-mouse-2] 'insert-primary-selection)
+  (global-set-key [S-mouse-2] 'insert-primary-selection)
+#+end_src

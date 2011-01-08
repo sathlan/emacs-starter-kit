@@ -111,7 +111,7 @@ a lambda doesn't already exist in the list.
 #+end_src
 
 #+srcname: starter-kit-add-hl-line-mode
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp 
 (add-hook 'coding-hook 'turn-on-hl-line-mode)
 #+end_src
 
@@ -166,11 +166,12 @@ a lambda doesn't already exist in the list.
 #+srcname: starter-kit-pretty-lambdas
 #+begin_src emacs-lisp 
 (defun pretty-lambdas ()
-  (font-lock-add-keywords
-   nil `(("(?\\(lambda\\>\\)"
-          (0 (progn (compose-region (match-beginning 1) (match-end 1)
-                                    ,(make-char 'greek-iso8859-7 107))
-                    nil))))))
+  (if (not (string= major-mode "scheme-mode"))
+      (font-lock-add-keywords
+       nil `(("(?\\(lambda\\>\\)"
+              (0 (progn (compose-region (match-beginning 1) (match-end 1)
+                                        ,(make-char 'greek-iso8859-7 107))
+                        nil)))))))
 #+end_src
 
 ** Other
@@ -268,4 +269,20 @@ A monkeypatch to cause annotate to ignore whitespace
 (defun vc-git-annotate-command (file buf &optional rev)
   (let ((name (file-relative-name file)))
     (vc-git-command buf 0 name "blame" "-w" rev)))
+#+end_src
+
+** Some variables
+Add the path to the info file here and if the =dir= file is not
+present, you must start in the directory.
+#+begin_src sh
+  install-info --dir-file dir <file>.info
+#+end_src
+#+begin_src emacs-lisp
+  (setq Info-additional-directory-list '("~/.emacs.d/src/org/doc"
+                                         "~/.emacs.d/src/magit"
+                                         "/home/chem/.emacs.d/src/jabber"
+                                         "/usr/home/chem/.emacs.d/src/gnus/texi"
+                                         "~/.emacs.d/src/geiser/doc"
+                                         "~/.emacs.d/src/slime/doc"))
+    
 #+end_src

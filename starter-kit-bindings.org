@@ -181,3 +181,13 @@ Rgrep is infinitely useful in multi-file projects.
 #+begin_src emacs-lisp
   (define-key global-map "\C-x\C-r" 'rgrep)
 #+end_src
+
+** kill Append.
+Org mode override the default =C-M-w=.  Bound to =F12=
+#+begin_src emacs-lisp
+  (define-key global-map (kbd "<f12>") 'append-next-kill)
+#+end_src 
+** slime
+#+begin_src emacs-lisp
+  (define-key global-map (kbd "<f10>") 'slime-selector)
+#+end_src

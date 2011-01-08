@@ -1,0 +1,113 @@
+#+TITLE: Starter Kit W3M
+#+OPTIONS: toc:nil num:nil ^:nil
+
+* Starter Kit W3M
+[[http://en.wikipedia.org/wiki/W3m][w3m]] is a text web browser.
+
+#+begin_src emacs-lisp
+   (require 'w3m-load)
+   (add-hook 'octet-find-file-hook 'view-mode)
+   (add-hook 'octet-find-file-hook 'w3m-minor-mode)
+   (setq w3m-use-cookies 't)
+   ;(require 'octet)
+   ;(octet-mime-setup)
+   (setq w3m-cookie-accept-bad-cookies 'ask)
+                                   ; Define w3m as a default browser.
+   (setq browse-url-browser-function 'w3m-browse-url)
+   (autoload 'w3m-browse-url "w3m" "Ask a WWW browser to show a URL." t)
+                                   ; Define search engine.
+   (setq alist-search-engine '(
+                               (("Freebsd Man Pages"
+                           "http://www.FreeBSD.org/cgi/man.cgi?query=%s&apropos=0&sektion=0&manpath=FreeBSD+7.0-RELEASE+and+Ports&format=html" nil)
+                          "\\`fbsd:" w3m-search-uri-replace "Freebsd Man Pages")
+                               (("Emacs Wiki"
+                           "http://www.emacswiki.org/cgi-bin/emacs-en?search=%s" nil)
+                          "\\`em:" w3m-search-uri-replace "Emacs Wiki")
+                         (("IMDB"
+                           "http://www.imdb.com/find?tt=on;nm=on;mx=20;q=%s" nil)
+                          "\\`imdb:" w3m-search-uri-replace "IMDB")
+                         (("Freshmeat"
+                           "http://freshmeat.net/search/?q=%s&section=projects" nil)
+                          "\\`fm:p" w3m-search-uri-replace "Freshmeat")
+                         (("Wikipedia eng"
+                           "http://en.wikipedia.org/wiki/Special:Search?search=%s" nil)
+                          "\\`wike:" w3m-search-uri-replace "Wikipedia eng")
+                         (("Wikipedia fr"
+                           "http://fr.wikipedia.org/wiki/Special:Search?search=%s" nil)
+                          "\\`wikf:" w3m-search-uri-replace "Wikipedia fr")
+                         (("Amazon fr"
+                           "http://www.amazon.fr/exec/obidos/search-handle-form/402-4813680-6472958" nil "url=index=blended&field-keywords=%s")
+                          "\\`amaf:" w3m-search-uri-replace "Amazon fr")
+                         (("Amazon en"
+                           "http://www.amazon.com/exec/obidos/search-handle-form?url=index=blended&field-keywords=%s" nil)
+                          "\\`amae:" w3m-search-uri-replace "Amazon en")
+                         (("Abebooks"
+                           "http://www.abebooks.fr/servlet/SearchResults?imagefield.x=0&tn=%s&sortby=3&imagefield.y=0" nil)
+                          "\\`abeb:" w3m-search-uri-replace "Abebooks")
+                         (("Livre-rare-book"
+                           "http://www.livre-rare-book.com/cgi-bin/libbcgi?ch_tit=%s" nil)
+                          "\\`livr:" w3m-search-uri-replace "Livre-rare-book")
+                         (("BSD Groups"
+                           "http://groups-beta.google.com/groups?as_q=%s&num=50&as_epq=&scoring=r&hl=en&ie=UTF-8&as_oq=&as_eq=&as_ugroup=comp.unix.*&as_usubject=&as_uauthors=&lr=&as_qdr=&as_drrb=q&as_mind=1&as_minm=1&as_miny=1981&as_maxd=26&as_maxm=2&as_maxy=2005&safe=off" nil)
+                          "\\`bsd:" w3m-search-uri-replace "BSD Groups")
+                         (("RFC"
+                           "http://www.ietf.org/rfc/rfc%s.txt" nil)
+                          "\\`rfc:" w3m-search-uri-replace "RFC")
+                         (("RFC search"
+                           "http://www.faqs.org/rfcs/rfcresults.html?cx=012585674615115756003:0rnper8ld_o&cof=FORID:11&ie=UTF-8&hq=more:rfc&q=%s" nil)
+                          "\\`rfcs:" w3m-search-uri-replace "RFC search")
+                               (("CPAN"
+                                 "http://search.cpan.org/search?query=%s&mode=all" nil)
+                                "\\`cpan:" w3m-search-uri-replace "CPAN")
+                         ))
+   (eval-after-load "w3m"
+     '(let ((engine alist-search-engine))
+        (while engine
+          (add-to-list 'w3m-uri-replace-alist (cdr (car engine)))
+          (setq engine (cdr engine)))))
+   
+   (eval-after-load "w3m-search"
+     '(let ((engine alist-search-engine))
+        (while engine
+          (add-to-list 'w3m-search-engine-alist (car (car engine)))
+          (setq engine (cdr engine)))))
+                                   ; Navigation
+   (fset 'ch:init-w3m-next
+         [?\M-< ?\C-s ?n ?e ?x ?t ?\C-m return ?\C-x ?>])
+   (fset 'ch:init-w3m-prev
+         [?\M-< ?\C-s ?p ?r ?e ?v ?\C-m return])
+   (fset 'ch:init-w3m-home
+         [?\M-> ?\C-r ?h ?o ?m ?e ?\C-m return])
+   (fset 'ch:init-w3m-open-link-other-window
+         [?u ?G ?\C-y ?\C-k return])
+   (fset 'ch:init-w3m-google-previous
+         [?\C-s ?n ?a ?v ?_ ?p ?r ?e ?v ?i ?\C-m return])
+   (fset 'ch:init-w3m-google-next
+         [?\C-s ?n ?a ?v ?_ ?n ?e ?x ?t ?\C-m return])
+   
+   (add-hook 'w3m-mode-hook
+             '(lambda ()
+                (define-key w3m-mode-map "n"
+            'ch:init-w3m-next)
+                (define-key w3m-mode-map "p"
+            'ch:init-w3m-prev)
+                (define-key w3m-mode-map "m"
+            'ch:init-w3m-home)
+                (define-key w3m-mode-map "o"
+            'ch:init-w3m-open-link-other-window)
+                (define-key w3m-mode-map "/"
+            'ch:init-w3m-google-next)
+                (define-key w3m-mode-map "P"
+            'ch:init-w3m-google-previous)))
+                                   ; For better table
+                                         ; require proper fonts,
+                                         ; but donno how to test
+                                         ; it.
+   (setq w3m-default-symbol
+         '("─┼" " ├" "─┬" " ┌" "─┤" " │" "─┐" ""
+           "─┴" " └" "──" ""   "─┘" ""   ""   ""
+           "─┼" " ┠" "━┯" " ┏" "─┨" " ┃" "━┓" ""
+           "━┷" " ┗" "━━" ""   "━┛" ""   ""   ""
+           " •" " □" " ☆" " ○" " ■" " ★" " ◎"
+           " ●" " △" " ●" " ○" " □" " ●" "≪ ↑ ↓ "))
+#+end_src

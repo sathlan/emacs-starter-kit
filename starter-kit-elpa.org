@@ -9,14 +9,14 @@ This is part of the [[file:starter-kit.org][Emacs Starter Kit]].
 The following packages should all ways be installed
 
 #+begin_src emacs-lisp
-  (defvar starter-kit-packages (list 'idle-highlight
+  (defvar starter-kit-packages (list 
                                      'ruby-mode
-                                     'inf-ruby
+                                     
                                      'js2-mode
                                      'css-mode
-                                     'yasnippet-bundle
-                                     'gist
-                                     'paredit)
+                                     
+                                     
+                                     )
     "Libraries that should be installed by default.")
 #+end_src
 

@@ -7,14 +7,57 @@ This is part of the [[file:starter-kit.org][Emacs Starter Kit]].
 Helpers for the [[http://www.perl.org/][Perl]] programming language.
 
 #+begin_src emacs-lisp
-(eval-after-load 'cperl-mode
-  '(progn
-     (define-key cperl-mode-map (kbd "RET") 'reindent-then-newline-and-indent)
-     (define-key cperl-mode-map (kbd "C-M-h") 'backward-kill-word)))
+  (eval-after-load 'cperl-mode
+    '(progn
+       (define-key cperl-mode-map (kbd "RET") 'reindent-then-newline-and-indent)
+       (define-key cperl-mode-map (kbd "C-M-h") 'backward-kill-word)))
+#+end_src
 
-(global-set-key (kbd "C-h P") 'perldoc)
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-h P") 'perldoc)
+#+end_src
 
-(add-to-list 'auto-mode-alist '("\\.p[lm]$" . cperl-mode))
-(add-to-list 'auto-mode-alist '("\\.pod$" . pod-mode))
-(add-to-list 'auto-mode-alist '("\\.tt$" . tt-mode))
+** Files associated with Perl
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.p[lm]$" . cperl-mode))
+  (add-to-list 'auto-mode-alist '("\\.t$" . cperl-mode))
+  (add-to-list 'auto-mode-alist '("\\.pod$" . pod-mode))
+  (add-to-list 'auto-mode-alist '("\\.tt$" . tt-mode))
+#+end_src
+
+** Set style 
+#+begin_src emacs-lisp
+  (setq cperl-set-style "PerlStyle"
+        cperl-hairy t
+        cperl-indent-parens-as-block t
+        cperl-tab-always-indent t)
+#+end_src
+
+** Find code
+This function find and open the specified module.
+#+begin_src emacs-lisp
+  (defun ch:perl-load-path ()
+    (split-string
+     (shell-command-to-string
+      "perl -e 'pop @INC; print join(q/ /,@INC);'")))
+  
+  (defun ch:locate-perl (module)
+    (interactive "MModule: ")
+    (let* ((r (replace-regexp-in-string ":" "/" module))
+           (e (replace-regexp-in-string "//" "/" r))
+           (x (list ".pm" ".pl" ".xs"))
+           (mod-path (locate-file (concat e ".pm")
+                                  (ch:perl-load-path))))
+      (find-file mod-path)))
+#+end_src
+
+** Integrate with ffap
+#+begin_src emacs-lisp
+  (defun my-cperl-ffap-locate(name)
+    "Return cperl module for ffap"
+    (let* ((r (replace-regexp-in-string ":" "/" (file-name-sans-extension name)))
+           (e (replace-regexp-in-string "//" "/" r))
+           (x (ffap-locate-file e '(".pm" ".pl" ".xs") ffap-perl-inc-dirs)))
+      x))
+  (add-to-list 'ffap-alist  '(perl-mode . my-cperl-ffap-locate))
 #+end_src

@@ -1,0 +1,70 @@
+#+TITLE: Starter Kit Stylish
+#+OPTIONS: toc:nil num:nil ^:nil
+
+This is not part of the [[file:starter-kit.org][Emacs Starter Kit]].
+
+* Starter kit Stylish
+Check this from [[https://github.com/jrockway/stylish][jrockway's stylish at master - GitHub]] and the doc
+there: [[http://blog.jrock.us/posts/Stylish%20REPL.pod][Stylish Pod]].  I conveniently copy it here:
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+=pod
+
+I've been writing a bit of common lisp these days, and a "feature" I
+really like is SLIME.  Rather than giving up Perl forever and telling
+everyone how awesome lisp is, I decided it would be easier to just
+steal the nice features for Perl instead.  After all, there aren't
+very many "lisp mongers" groups :P
+
+So, I've started a project called Stylish that is an
+editor-independent editor<->Perl integration server.  You can browse
+the source code at
+L<http://git.jrock.us/?p=Server-Stylish.git;a=summary>, or download it
+with C<< git clone git://git.jrock.us/Server-Stylish >>.
+
+Here's how Stylish works.  Basically, your editor sends it a request,
+it does something smart, and then it sends back the response.  Right
+now, I've implemented a PPI-based syntax highlighter and a
+Devel::REPL-based REPL (yes, it does plugins!).  Eventually I want to
+add a debugger and documentation "browser" (basically like SLIME).
+
+If you're using emacs, you can try the REPL right now.  It's "beta",
+but I use it for everything now, so it's pretty solid and featureful.
+To run it, get the source code, and inside emacs, run C<M-x
+load-library> on C<emacs/stylish.el> (the networking code),
+C<emacs/stylish-repl.el> (the REPL core), and
+C<emacs/stylish-repl-iedit.el> (the interactive REPL-based editor).
+Then, start the perl server by running C<perl -Ilib bin/stylish.pl>.
+Finally, fire up the emacs REPL by running C<M-x stylish-repl> inside
+emacs.  There's your REPL; it works like you think it would.  Enter
+sends the line to Perl, and your result is printed (you also get stdin
+and stdout).  M-n and M-p navigate the history.  C<,help> will show
+you some help.  (BTW, this command system is extensible; read
+stylish-repl-iedit.el for an example.)
+
+It's hard to explain all the cool features here, so I made a
+screencast:
+
+L<http://www.iinteractive.com/stylish-repl-screencast.ogv>
+
+I like it.  Hopefully you will too.  I'm looking forward to seeing the
+TextMate and Vim integration layers. :)
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFH882a2rw+dVvzZm0RAl2yAKCDFkixZal6G8mrdWDXYrBqoFjlMgCgrhK6
+rgV+7rLONfPXWwrH1LvF66c=
+=Ik8h
+-----END PGP SIGNATURE-----
+
+** Installation
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/src/stylish/el")
+  (require 'stylish)
+  (require 'stylish-repl)
+  (ignore-errors (require 'stylish-repl-iedit))
+  (require 'stylish-project)
+#+end_src

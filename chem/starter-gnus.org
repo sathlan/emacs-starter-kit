@@ -1,0 +1,292 @@
+#+TILLE: Gnus Configuration
+#+OPTIONS: toc:nil num:nil ^:nil
+
+* Gnus
+First off, load up =gnus=
+#+begin_src emacs-lisp
+  (setq gnus-init-file "~/.emacs.d/chem/starter-gnus.el")
+  (add-to-list 'load-path "~/.emacs.d/src/gnus/lisp")
+  (require 'gnus)
+  (require 'gnus-util)
+  ;  (require 'mail-source)
+#+end_src
+
+** Load host specific code
+#+begin_src emacs-lisp
+;   (require 'ch/local (concat (shell-command-to-string "hostname") ".el"))
+   (require 'ch/library "library.el")
+#+end_src
+
+** Basic configuration
+This is derived from the procmail regex TO_ To use it concaten it with
+the email address you're looking for
+#+BEGIN_SRC emacs-lisp
+   (setq procmail-TO_ "\\(^\\(Original-\\)?\\(Resent-\\)?\\(To\\|Cc\\|Bcc\\)\\|\\(X-Envelope\\|Apparently\\(-Resent\\)?\\)-To\\):.*")
+#+END_SRC
+
+Does not really exists in procmail, just being consistent.
+#+BEGIN_SRC emacs-lisp
+   (setq procmail-FROM_ "^From:.*")
+#+END_SRC
+
+Use topic and smileys
+#+BEGIN_SRC emacs-lisp
+   (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
+   (setq gnus-treat-display-smileys t)
+#+END_SRC
+
+I like org edition everywhere
+#+BEGIN_SRC emacs-lisp
+   (add-hook 'message-mode-hook 'turn-on-orgstruct)
+   (add-hook 'message-mode-hook 'turn-on-orgtbl)
+#+END_SRC
+
+And I Prefer text mail part.
+#+BEGIN_SRC emacs-lisp
+   (setq mm-discouraged-alternatives '("text/html" "text/richtext"))
+#+END_SRC
+
+** Archiving sent mail
+#+BEGIN_SRC emacs-lisp
+   (setq gnus-message-archive-group
+   '((cond ((string-match "nnimap+IMAP-hubxpress:INBOX" gnus-newsgroup-name)
+   "nnimap+IMAP-hubxpress:INBOX")
+   ((string-match "\\(.*IMAP-nouveau-perso:INBOX.*\\)"
+   gnus-newsgroup-name)
+   "nnimap+IMAP-nouveau-perso:INBOX")
+   ((string-match ".*IMAP-hubxpress.*" gnus-newsgroup-name)
+   "nnimap+IMAP-hubxpress:INBOX")
+   (t "nnml:mail.perso"))))
+#+END_SRC
+
+** Sources of messages
+*** Files in the ~/.mail dir from fetchmail/procmail
+#+BEGIN_SRC emacs-lisp
+    (setq message-directory "~/.mail/")
+    (setq nnml-directory "~/.mail/")
+    (setq mail-sources '(
+    (directory
+    :path "~/.mail/procmail/"
+    :suffix ".prcml"
+    :plugged t
+    )
+    (file
+    :path "~/.mail/procmail/chem"
+    :plugged t)
+    ))
+#+END_SRC
+
+*** News service
+#+BEGIN_SRC emacs-lisp
+    (setq nntp-authinfo-file ".authinfo")
+    (setq gnus-select-method '(nntp "news.fdn.org"))
+#+END_SRC
+
+*** TODO IMAP
+#+BEGIN_SRC emacs-lisp
+    (setq gnus-secondary-select-methods
+    '(
+    (nnml "")))
+#+END_SRC
+
+** TODO Search into mailboxes
+The following code is not enough.
+#+BEGIN_SRC emacs-lisp
+;   (require 'nnir)
+   (setq nnir-search-engine 'namazu)
+   (setq nnir-mail-backend (assoc 'nnimap gnus-secondary-select-methods))
+   (setq nnir-namazu-index-director "~/.local/var/cache/namazu")
+   (setq nnir-namazu-remove-prefix "~/.mail")
+#+END_SRC
+
+** Contacts management
+[[http://bbdb.sourceforge.net/][BBDB]] -- _The Insidious Big Brother Database_ is Emacs' contact manager
+which is very useful for keeping all of your contacts organized for
+use with gnus.
+
+#+BEGIN_SRC emacs-lisp
+   (require 'bbdb)
+   (require 'bbdb-autoloads)
+   (setq bbdb-offer-save 'auto
+   bbdb-notice-auto-save-file t
+   bbdb-expand-mail-aliases t
+   bbdb-canonicalize-redundant-nets-p t
+   bbdb-always-add-addresses t
+   bbdb-complete-name-allow-cycling t)
+   (bbdb-initialize 'gnus 'message)
+#+END_SRC
+
+** Splitting
+Use fancy and BBDB.
+#+BEGIN_SRC emacs-lisp
+   ;;;_ > Split
+   (setq gnus-ignored-from-addresses
+   "chem[^@]*@gmail.com")
+   (setq nnmail-crosspost nil
+   nnmail-split-methods 'bbdb/gnus-split-method
+   bbdb/gnus-split-nomatch-function 'nnmail-split-fancy
+   bbdb/gnus-split-myaddr-regexp gnus-ignored-from-addresses
+   nnmail-split-fancy
+   `(| (any "root@\\(\\(osiris\\|hermes\\)\\.\\)?olympe\\.home" "mail.admin" )
+   (any "[^@]+@seloger\\.com.*" "achat.logement")
+   (any "\\(.*e[bB]ay\\(-INTL[^@]*\\)?\\|\\(member\\|endofitem\\|checkout\\)\\)@\\(reply.?\\.\\)?ebay\\.\\(fr\\|com\\|ca\\).*" "achat.ebay")
+   (any "e[Bb]ay" "achat.ebay")
+   (any ".*\\(wants\\|orders?\\|info\\|buyertech\\|news\\)@\\(newsletter\\.\\)+abebooks\\.\\(com\\|fr\\).*" "achat.livres")
+   (any "[^@]*@safaribooksonline\\.com" "achat.safari")
+   (from "safari[^.]*.com" "achat.safari")
+   (any "[eE]conomist" "mail.economist")
+   (any "\\(trenitalia\\|Voyages-sncf\\)\\.com" "achat.sncf")
+   (any "Amazon\\.\\(fr\\|com\\)" "achat.amazon")
+   (any "\\(ag\\|sympa\\|bureau\\|suivi-adsl\\)@fdn.fr" "mail.fdn")
+   (to  "benevoles@fdn.fr" "fdn.benevole")
+   (any "\\(ftth\\|nobox\\)@fdn.fr" "news.projets")
+   (any "newsletter@conrad\\.fr" "mail.conrad")
+   (any "[^@]+@ubidoca.com" "mail.ubidoca")
+   (any "[^@]+@bellevilleenvues.net" "mail.bellevilleenvues")
+   (any "[^@]+@ffii.org" "mail.polinfo")
+   (any "[^@]+@operadeparis.fr" "mail.culture")
+   (any "[^0]+@emessages.cisco.com" "mail.network")
+   (any "[Cc]nam" "mail.cnam")
+   (any "[aA]pril" "april")
+   (any  "discussion\\(-request\\)?@lists.fsfe.org" "fsfe.discussion")
+   (to  "discussion@lists.fsfe.org" "fsfe.discussion")
+   (any "fsfeurope" "fsf.europe")
+   (any "fsf\\.org" "fsf.world")
+   (any "chem\\(tov\\|lecouscous\\)@\\(gmail\\|yahoo\\|ifrance\\)\\.com" "mail.perso")
+   "mail.other"))
+#+END_SRC
+
+** More attractive Summary View
+Thanks to Dan Davison.
+
+#+begin_src emacs-lisp
+   ;; http://groups.google.com/group/gnu.emacs.gnus/browse_thread/thread/a673a74356e7141f
+   (when window-system
+   (setq gnus-sum-thread-tree-indent "  ")
+   (setq gnus-sum-thread-tree-root "") ;; "● ")
+   (setq gnus-sum-thread-tree-false-root "") ;; "◯ ")
+   (setq gnus-sum-thread-tree-single-indent "") ;; "◎ ")
+   (setq gnus-sum-thread-tree-vertical        "│")
+   (setq gnus-sum-thread-tree-leaf-with-other "├─► ")
+   (setq gnus-sum-thread-tree-single-leaf     "╰─► "))
+   (setq gnus-summary-line-format
+   (concat
+   "%0{%U%R%z%}"
+   "%3{│%}" "%1{%d%}" "%3{│%}" ;; date
+   "  "
+   "%4{%-20,20f%}"               ;; name
+   "  "
+   "%3{│%}"
+   " "
+   "%1{%B%}"
+   "%s\n"))
+   (setq gnus-summary-display-arrow t)
+#+end_src
+
+** Send mail with [[info:gnus:Posting%20Styles][Posting Styles]]
+#+BEGIN_SRC emacs-lisp
+   (setq gnus-posting-styles
+   '((".*"
+   (signature ch/signature/randomizer))))
+#+END_SRC
+
+** Sending using =msmtp=
+#+begin_src emacs-lisp
+   (setq message-sendmail-f-is-evil t) ;use --read-envelope-from of msmtp
+   (setq message-send-mail-function 'message-send-mail-with-sendmail)
+   (setq sendmail-program "/usr/local/bin/msmtp")
+#+end_src
+
+** Encryption
+Using GPG.
+#+BEGIN_SRC emacs-lisp
+   (setq pgg-passphrase-cache-expiry 300)
+   (autoload 'pgg-encrypt-region "pgg" "Encrypt the current region." t)
+   (autoload 'pgg-decrypt-region "pgg" "Decrypt the current region." t)
+   (autoload 'pgg-sign-region "pgg" "Sign the current region." t)
+   (autoload 'pgg-verify-region "pgg" "Verify the current region." t)
+   (autoload 'pgg-insert-key "pgg" "Insert the ASCII armored public key." t)
+   (autoload 'pgg-snarf-keys-region "pgg" "Import public keys in the current region." t)
+#+END_SRC
+
+** Citations
+#+BEGIN_SRC emacs-lisp
+   (autoload 'trivial-cite "tc" t t)
+   (setq message-cite-function 'trivial-cite)
+   (setq tc-mouse-overlays t)
+   (setq tc-time-format "%Y-%m-%d %T %z")
+#+end_src
+
+Try hard to detect signature
+#+BEGIN_SRC emacs-lisp
+   (setq tc-remove-signature "^\\(--\\[ Pub \\]-*\\|-- \\|--\\|--- \\|---\\|___ \\|___\\)$")
+#+end_src
+
+I18N: Make it speak french
+#+BEGIN_SRC emacs-lisp
+  ; recognize french weekday name.
+  (setq gnus-cite-attribution-prefix
+        "In article\\|in <\\|On \\(Mon\\|Tue\\|Wed\\|Thu\\|Fri\\|Sat\\|Sun\\),\\|----- ?Original Message ?-----<\\|Le \\(lun\\|mar\\|mer\\|jeu\\|ven\\|sam\\|dim\\)\\|Selon")
+  (setq gnus-cite-attribution-suffix "\\(\\(a écrit \\|wrote\\|writes\\|said\\|says\\|>:\\|>\\)\\(:\\|\\.\\.\\.\\)\\|----- ?Original Message ?-----\\)[ \t]*$")
+  
+                                          ; Make it write in french.
+  (defun tc-french-attributor (date name)
+    "A simple attribution function suitable as default for tc-groups-functions."
+    (concat "Le " date ", " name " a écrit :"))
+  
+  (defun tc-multilangage-attribution ()
+    "A french or English attribution function.
+  Take care of the date format, if it's english, day will be
+  monday, thuesday,..., if it's french, it will be lundi,
+  mardi,... Beware: tc-time-format *has* to be set to
+  \"%Y-%m-%dT%T%z\" which is POSIX something (i forgot)."
+    (let ((date (cdr-safe (assoc "date" tc-strings-list)))
+          (email (cdr-safe (assoc "email-addr" tc-strings-list)))
+          (name (cdr-safe (assoc "real-name" tc-strings-list)))
+          (group (gnus-group-real-name gnus-newsgroup-name))
+          (tc-date-local system-time-locale)
+          )
+      (cond
+                                          ; Name of group matching LOCAL date.
+       ((string-match "^.*$" group) ; french for all!
+                                          ; maybe add a function to change it for
+                                          ; english reader?
+        (concat
+         (tc-french-attributor
+          (format-time-string "%A %d %B %Y à %R %Z" (date-to-time date) t) name)
+         "\n\n"))
+       (t
+                                          ; The others will be in english (POSIX).
+        (progn
+          (let ((date-locale (ch/format-date date "POSIX"  "%A, %B %e, %Y at %R %Z")))
+            (concat (tc-simple-attributor date-locale name ) "\n\n")))))))
+  
+  (setq tc-make-attribution 'tc-multilangage-attribution)
+  
+#+END_SRC
+
+** Archive
+   Here the general definition.
+#+BEGIN_SRC emacs-lisp
+   (setq gnus-message-archive-method
+   '(nnfolder "archive"
+   (nnfolder-inhibit-expiry t)
+   (nnfolder-active-file "~/.mail/sent/active")
+   (nnfolder-directory "~/.mail/sent/")))
+   (setq gnus-message-archive-group
+   '((if (message-news-p)
+   "sent-news"
+   "sent-mail")))
+#+END_SRC
+
+   Keep a copy of what I'm sending
+#+BEGIN_SRC emacs-lisp
+   (setq gnus-message-archive-group
+   '((".*" "nnml:mail.perso")))
+#+END_SRC
+
+** HTML message display
+#+BEGIN_SRC emacs-lisp
+   (setq mm-text-html-renderer 'w3m)
+   (setq mm-inline-text-html-with-images t)
+#+end_src
